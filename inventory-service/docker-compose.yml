@@ -1,0 +1,14 @@
+version: '4'
+
+services:
+  mongodbInventoryService:
+    image: mongo:latest
+    container_name: mongodbInventoryService
+    ports:
+      - "27019:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: inventory-service
+    volumes:
+      - ./data:/data/db
