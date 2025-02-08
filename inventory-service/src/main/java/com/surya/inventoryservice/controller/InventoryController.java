@@ -27,7 +27,7 @@ public class InventoryController {
         return inventoryService.isInStock(productId, qty);
     }
 
-    @GetMapping("/decreaseProductStock")
+    @PostMapping("/decreaseProductStock")
     public Inventory decreaseProductStock(@RequestBody Inventory inventory) {
         return inventoryService.decreaseProductStock(inventory.getProductId(), inventory.getQty());
     }

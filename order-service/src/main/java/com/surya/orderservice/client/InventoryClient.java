@@ -1,17 +1,16 @@
 package com.surya.orderservice.client;
 
-import com.surya.orderservice.dto.InventoryRequest;
-import com.surya.orderservice.dto.InventoryResponse;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.service.annotation.GetExchange;
-import org.springframework.web.service.annotation.PostExchange;
+import com.surya.orderservice.dto.Inventory;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.*;
 
+@FeignClient(value = "inventoryClient", url = "http://localhost:8082/api/inventory/")
 public interface InventoryClient {
 
-    final String INVENTORY_API = "/api/inventory";
+    @GetMapping("/isInStock")
+    boolean isInStock(@RequestParam String productId, @RequestParam long qty);
 
-    @GetExchange(INVENTORY_API+"/isInStock")
-    boolean isInStock(@RequestParam String productId, @RequestParam Long quantity);
+    @PostMapping("/decreaseProductStock")
+    Inventory decreaseProductStock(@RequestBody Inventory inventory);
 
 }
