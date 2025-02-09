@@ -1,6 +1,6 @@
 package com.surya.inventoryservice.repository;
 
-import com.surya.inventoryservice.model.Inventory;
+import com.surya.microservices.model.Inventory;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;

@@ -1,6 +1,7 @@
 package com.surya.paymentservice.controller;
 
-import com.surya.paymentservice.model.Payment;
+import com.surya.microservices.dto.Payment.PaymentRequest;
+import com.surya.microservices.dto.Payment.PaymentResponse;
 import com.surya.paymentservice.service.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -13,13 +14,13 @@ public class PaymentController {
     private PaymentService paymentService;
 
     @PostMapping
-    public Payment createPayment(@RequestBody Payment payment) {
-        return paymentService.createPayment(payment.getOrderNumber(), payment.getPrice());
+    public PaymentResponse createPayment(@RequestBody PaymentRequest paymentRequest) {
+        return paymentService.createPayment(paymentRequest);
     }
 
     @GetMapping
-    public Payment getByOrderNumber(@RequestParam String orderNumber) {
-        return paymentService.findByOrderNumber(orderNumber);
+    public PaymentResponse getByOrderNumber(@RequestParam String orderNumber) {
+        return paymentService.getByOrderNumber(orderNumber);
     }
 
 }

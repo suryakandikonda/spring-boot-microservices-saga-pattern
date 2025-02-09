@@ -1,13 +1,13 @@
 package com.surya.paymentservice.service;
 
+import com.surya.microservices.dto.Payment.PaymentRequest;
+import com.surya.microservices.dto.Payment.PaymentResponse;
 import com.surya.paymentservice.enums.PaymentStatus;
-import com.surya.paymentservice.model.Payment;
+import com.surya.microservices.model.Payment;
 import com.surya.paymentservice.repository.PaymentRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.math.BigDecimal;
 
 @Service
 @Slf4j
@@ -16,7 +16,7 @@ public class PaymentService {
     @Autowired
     private PaymentRepository paymentRepository;
 
-    public Payment save(Payment payment) {
+    private Payment save(Payment payment) {
         log.trace("save()");
         try {
             return paymentRepository.save(payment);
@@ -26,7 +26,7 @@ public class PaymentService {
         return payment;
     }
 
-    public Payment findByOrderNumber(String orderNumber) {
+    private Payment findByOrderNumber(String orderNumber) {
         log.trace("findByOrderNumber()");
         try {
             return paymentRepository.findByOrderNumber(orderNumber);
@@ -36,19 +36,33 @@ public class PaymentService {
         return null;
     }
 
+    public PaymentResponse getByOrderNumber(String orderNumber) {
+        log.trace("getByOrderNummber()");
+        try {
+            Payment payment = paymentRepository.findByOrderNumber(orderNumber);
+            return new PaymentResponse(payment.getOrderNumber(), payment.getPrice(), payment.getPaymentStatus());
+        } catch (Exception e) {
+            log.error("getByOrderNummber() Exception: {}", e.getMessage());
+        }
+        return null;
+    }
 
-    public Payment createPayment(String orderNumber, BigDecimal price) {
+
+    public PaymentResponse createPayment(PaymentRequest paymentRequest) {
         log.trace("createPayment()");
         try {
-            Payment existPayment = findByOrderNumber(orderNumber);
-            if(existPayment != null) return existPayment;
+            Payment existPayment = findByOrderNumber(paymentRequest.orderNumber());
+            if(existPayment != null) {
+                return new PaymentResponse(existPayment.getOrderNumber(), existPayment.getPrice(), existPayment.getPaymentStatus());
+            }
             else {
-                Payment payment = Payment.builder()
-                        .orderNumber(orderNumber)
-                        .price(price)
+                existPayment = Payment.builder()
+                        .orderNumber(paymentRequest.orderNumber())
+                        .price(paymentRequest.price())
                         .paymentStatus(PaymentStatus.PROCESSING.name())
                         .build();
-                return save(payment);
+                existPayment = save(existPayment);
+                return new PaymentResponse(existPayment.getOrderNumber(), existPayment.getPrice(), existPayment.getPaymentStatus());
             }
         } catch (Exception e) {
             log.error("createPayment() Exception: {}", e.getMessage());

@@ -1,4 +1,4 @@
-package com.surya.paymentservice.model;
+package com.surya.microservices.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,7 +16,7 @@ import java.math.BigDecimal;
 public class Payment {
 
     @Id
-    private ObjectId objectId;
+    private ObjectId id;
 
     private String orderNumber;
 

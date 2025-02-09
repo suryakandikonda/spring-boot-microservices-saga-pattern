@@ -1,7 +1,8 @@
 package com.surya.inventoryservice.controller;
 
-import com.surya.inventoryservice.model.Inventory;
 import com.surya.inventoryservice.service.InventoryService;
+import com.surya.microservices.dto.Inventory.InventoryRequest;
+import com.surya.microservices.dto.Inventory.InventoryResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,13 +14,21 @@ public class InventoryController {
     private InventoryService inventoryService;
 
     @PostMapping
-    public Inventory createInventory(@RequestBody Inventory inventory) {
-        return inventoryService.createInventory(inventory);
+    public InventoryResponse createInventory(@RequestBody InventoryRequest inventoryRequest) {
+        try {
+            return inventoryService.createInventory(inventoryRequest);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @GetMapping("/getByProductId")
-    public Inventory getByProductId(@RequestParam("productId") String productId) {
-        return inventoryService.findByProductId(productId);
+    public InventoryResponse getByProductId(@RequestParam("productId") String productId) {
+        try {
+            return inventoryService.findByProductId(productId);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @GetMapping("/isInStock")
@@ -28,8 +37,8 @@ public class InventoryController {
     }
 
     @PostMapping("/decreaseProductStock")
-    public Inventory decreaseProductStock(@RequestBody Inventory inventory) {
-        return inventoryService.decreaseProductStock(inventory.getProductId(), inventory.getQty());
+    public InventoryResponse decreaseProductStock(@RequestBody InventoryRequest inventoryRequest) {
+        return inventoryService.decreaseProductStock(inventoryRequest);
     }
 
 }

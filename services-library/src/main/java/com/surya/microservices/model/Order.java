@@ -1,4 +1,4 @@
-package com.surya.orderservice.model;
+package com.surya.microservices.model;
 
 
 import lombok.AllArgsConstructor;

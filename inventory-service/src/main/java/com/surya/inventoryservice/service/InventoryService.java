@@ -1,7 +1,9 @@
 package com.surya.inventoryservice.service;
 
-import com.surya.inventoryservice.model.Inventory;
 import com.surya.inventoryservice.repository.InventoryRepository;
+import com.surya.microservices.dto.Inventory.InventoryRequest;
+import com.surya.microservices.dto.Inventory.InventoryResponse;
+import com.surya.microservices.model.Inventory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,17 +17,18 @@ public class InventoryService {
     @Autowired
     private InventoryRepository inventoryRepository;
 
-    public Inventory findByProductId(String productId) {
-        log.trace("findByProductId()");
+    private Inventory getInventoryByProductId(String productId) {
+        log.trace("getInventoryByProductId()");
         try {
             return inventoryRepository.findByProductId(productId);
         } catch (Exception e) {
-            log.error("findByProductId() Exception:{}", e.getMessage());
+            e.printStackTrace();
+            log.error("getInventoryByProductId() Exception: {}", e.getMessage());
         }
         return null;
     }
 
-    public Inventory save(Inventory inventory) {
+    private Inventory save(Inventory inventory) {
         log.trace("save()");
         try {
             return inventoryRepository.save(inventory);
@@ -35,28 +38,45 @@ public class InventoryService {
         return inventory;
     }
 
-    public Inventory createInventory(Inventory inventory) {
+    public InventoryResponse findByProductId(String productId) throws Exception {
+        log.trace("findByProductId()");
+        try {
+            Inventory inventory = getInventoryByProductId(productId);
+            if(inventory !=  null) {
+                return new InventoryResponse(inventory.getProductId(), inventory.getProductName(), inventory.getStockLeft());
+            } else throw new Exception("Inventory Not Found");
+        } catch (Exception e) {
+            log.error("findByProductId() Exception:{}", e.getMessage());
+            throw new Exception(e.getMessage());
+        }
+    }
+
+    public InventoryResponse createInventory(InventoryRequest inventoryRequest) throws Exception {
         log.trace("createInventory()");
         try {
-            Inventory existInventory = findByProductId(inventory.getProductId());
+            Inventory existInventory = getInventoryByProductId(inventoryRequest.productId());
             if(existInventory != null) {
-                inventory.setStockLeft(existInventory.getStockLeft() + inventory.getStockLeft());
-                inventory.setId(existInventory.getId());
+                existInventory.setStockLeft(existInventory.getStockLeft() + inventoryRequest.qty());
             }
-            else
-                inventory.setProductId(UUID.randomUUID().toString());
+            else {
+                existInventory = Inventory.builder().productId(UUID.randomUUID().toString())
+                                    .productName(inventoryRequest.productName())
+                                    .stockLeft(inventoryRequest.qty())
+                                    .build();
+            }
 
-            return save(inventory);
+            existInventory = save(existInventory);
+            return new InventoryResponse(existInventory.getProductId(), existInventory.getProductName(), existInventory.getStockLeft());
         } catch (Exception e) {
             log.error("createInventory() Exception: {}", e.getMessage());
+            throw new Exception(e.getMessage());
         }
-        return inventory;
     }
 
     public boolean isInStock(String productId, long qty) {
         log.trace("isInStock()");
         try {
-            Inventory inventory = findByProductId(productId);
+            Inventory inventory = getInventoryByProductId(productId);
             if(inventory != null && inventory.getStockLeft() >= qty) {
                 return true;
             }
@@ -66,14 +86,15 @@ public class InventoryService {
         return false;
     }
 
-    public Inventory decreaseProductStock(String productId, long qty) {
+    public InventoryResponse decreaseProductStock(InventoryRequest inventoryRequest) {
         log.trace("decreaseProductStock()");
         try {
-            Inventory inventory = findByProductId(productId);
+            Inventory inventory = getInventoryByProductId(inventoryRequest.productId());
             if(inventory != null) {
-                inventory.setStockLeft(inventory.getStockLeft() - qty);
+                inventory.setStockLeft(inventory.getStockLeft() - inventoryRequest.qty());
             }
-            return save(inventory);
+            inventory = save(inventory);
+            return new InventoryResponse(inventory.getProductId(), inventory.getProductName(), inventory.getStockLeft());
         } catch (Exception e) {
             log.error("decreaseProductStock() Exception: {}", e.getMessage());
         }

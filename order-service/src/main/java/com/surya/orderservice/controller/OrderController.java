@@ -1,8 +1,7 @@
 package com.surya.orderservice.controller;
 
-import com.surya.orderservice.dto.OrderRequest;
-import com.surya.orderservice.dto.OrderResponse;
-import com.surya.orderservice.model.Order;
+import com.surya.microservices.dto.Order.OrderRequest;
+import com.surya.microservices.dto.Order.OrderResponse;
 import com.surya.orderservice.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,12 +16,12 @@ public class OrderController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public String placeOrder(@RequestBody OrderRequest orderRequest) {
+    public OrderResponse placeOrder(@RequestBody OrderRequest orderRequest) throws Exception {
         return orderService.placeOrder(orderRequest);
     }
 
     @GetMapping("/getOrderByOrderNumber")
-    public Order getOrderByOrderNumber(@RequestParam("orderNumber") String orderNumber) {
+    public OrderResponse getOrderByOrderNumber(@RequestParam("orderNumber") String orderNumber) {
         return orderService.getOrderByOrderNumber(orderNumber);
     }
 

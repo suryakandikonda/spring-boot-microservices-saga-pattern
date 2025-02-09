@@ -1,6 +1,6 @@
 package com.surya.orderservice.repository;
 
-import com.surya.orderservice.model.Order;
+import com.surya.microservices.model.Order;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 

@@ -1,10 +1,11 @@
 package com.surya.orderservice.service;
 
+import com.surya.microservices.dto.Inventory.InventoryRequest;
+import com.surya.microservices.dto.Order.OrderResponse;
 import com.surya.orderservice.OrderStatus;
 import com.surya.orderservice.client.InventoryClient;
-import com.surya.orderservice.dto.Inventory;
-import com.surya.orderservice.dto.OrderRequest;
-import com.surya.orderservice.model.Order;
+import com.surya.microservices.dto.Order.OrderRequest;
+import com.surya.microservices.model.Order;
 import com.surya.orderservice.repository.OrderRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +23,7 @@ public class OrderService {
     @Autowired
     private InventoryClient inventoryClient;
 
-    public Order save(Order order) {
+    private Order save(Order order) {
         log.trace("save()");
         try {
             return orderRepository.save(order);
@@ -32,17 +33,22 @@ public class OrderService {
         return order;
     }
 
-    public Order getOrderByOrderNumber(String orderNumber) {
+    private Order findByOrderNumber(String orderNumber) {
+        return orderRepository.findByOrderNumber(orderNumber);
+    }
+
+    public OrderResponse getOrderByOrderNumber(String orderNumber) {
         log.trace("getOrderByOrderNumber()");
         try {
-            return orderRepository.findByOrderNumber(orderNumber);
+            Order order = findByOrderNumber(orderNumber);
+            return new OrderResponse(order.getOrderNumber(), order.getProductId(), order.getPrice(), order.getQuantity(), order.getOrderStatus());
         } catch (Exception e) {
             log.error("getOrderByOrderNumber() Exception: {}", e.getMessage());
         }
         return null;
     }
 
-    public String placeOrder(OrderRequest orderRequest) {
+    public OrderResponse placeOrder(OrderRequest orderRequest) throws Exception {
         StringBuilder stringBuilder;
         boolean isInStock = inventoryClient.isInStock(orderRequest.productId(), orderRequest.quantity());
         if(isInStock) {
@@ -55,25 +61,26 @@ public class OrderService {
                     .build();
 
             orderRepository.save(order);
-            Inventory inventory = Inventory.builder().productId(order.getProductId()).qty(order.getQuantity()).build();
-            inventoryClient.decreaseProductStock(inventory);
-            stringBuilder = new StringBuilder("Order placed successfully with Order Number:").append(order.getOrderNumber());
+            InventoryRequest inventoryRequest = new InventoryRequest(order.getProductId(), "", order.getQuantity());
+            inventoryClient.decreaseProductStock(inventoryRequest);
+            return new OrderResponse(order.getOrderNumber(), order.getProductId(), order.getPrice(), order.getQuantity(), order.getOrderStatus());
         } else {
             stringBuilder = new StringBuilder("Product is not is Stock. Product ID: ").append(orderRequest.productId());
+            throw new Exception("Product Not is Stock");
         }
-        log.info(stringBuilder.toString());
-        return stringBuilder.toString();
     }
 
-    public void markPaymentAsCompleted(String orderNumber) {
+    public OrderResponse markPaymentAsCompleted(String orderNumber) {
         log.trace("markPaymentAsCompleted()");
         try {
-            Order order = getOrderByOrderNumber(orderNumber);
+            Order order = findByOrderNumber(orderNumber);
             order.setOrderStatus(OrderStatus.PAYMENT_COMPLETED.name());
-            save(order);
+            order = save(order);
+            return new OrderResponse(order.getOrderNumber(), order.getProductId(), order.getPrice(), order.getQuantity(), order.getOrderStatus());
         } catch (Exception e) {
             log.error("markPaymentAsCompleted() Exception: {}", e.getMessage());
         }
+        return null;
     }
 
 }

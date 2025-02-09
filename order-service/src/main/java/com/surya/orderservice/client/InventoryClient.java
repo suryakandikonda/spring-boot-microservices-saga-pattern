@@ -1,6 +1,7 @@
 package com.surya.orderservice.client;
 
-import com.surya.orderservice.dto.Inventory;
+import com.surya.microservices.dto.Inventory.InventoryRequest;
+import com.surya.microservices.dto.Inventory.InventoryResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,6 +12,6 @@ public interface InventoryClient {
     boolean isInStock(@RequestParam String productId, @RequestParam long qty);
 
     @PostMapping("/decreaseProductStock")
-    Inventory decreaseProductStock(@RequestBody Inventory inventory);
+    InventoryResponse decreaseProductStock(@RequestBody InventoryRequest inventoryRequest);
 
 }
