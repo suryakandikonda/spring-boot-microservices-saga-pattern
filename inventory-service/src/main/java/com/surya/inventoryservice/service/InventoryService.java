@@ -101,4 +101,19 @@ public class InventoryService {
         return null;
     }
 
+    public InventoryResponse increaseProductStock(InventoryRequest inventoryRequest) {
+        log.trace("increaseProductStock()");
+        try {
+            Inventory inventory = getInventoryByProductId(inventoryRequest.productId());
+            if(inventory != null) {
+                inventory.setStockLeft(inventory.getStockLeft() + inventoryRequest.qty());
+            }
+            inventory = save(inventory);
+            return new InventoryResponse(inventory.getProductId(), inventory.getProductName(), inventory.getStockLeft());
+        } catch (Exception e) {
+            log.error("increaseProductStock() Exception: {}", e.getMessage());
+        }
+        return null;
+    }
+
 }

@@ -1,7 +1,10 @@
 package com.surya.orderservice.service;
 
 import com.surya.microservices.dto.Inventory.InventoryRequest;
+import com.surya.microservices.dto.Order.OrderEvent;
 import com.surya.microservices.dto.Order.OrderResponse;
+import com.surya.microservices.kafka.Events;
+import com.surya.microservices.kafka.KafkaTopic;
 import com.surya.orderservice.OrderStatus;
 import com.surya.orderservice.client.InventoryClient;
 import com.surya.microservices.dto.Order.OrderRequest;
@@ -9,6 +12,7 @@ import com.surya.microservices.model.Order;
 import com.surya.orderservice.repository.OrderRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -22,6 +26,9 @@ public class OrderService {
 
     @Autowired
     private InventoryClient inventoryClient;
+
+    @Autowired
+    private KafkaTemplate<String, OrderEvent> kafkaTemplate;
 
     private Order save(Order order) {
         log.trace("save()");
@@ -63,6 +70,9 @@ public class OrderService {
             orderRepository.save(order);
             InventoryRequest inventoryRequest = new InventoryRequest(order.getProductId(), "", order.getQuantity());
             inventoryClient.decreaseProductStock(inventoryRequest);
+            kafkaTemplate.send(KafkaTopic.SAGA_TOPIC.getTopicName(),
+                    new OrderEvent(new OrderRequest(order.getOrderNumber(), order.getProductId(), order.getPrice(), order.getQuantity()),
+                            Events.ORDER_CREATED));
             return new OrderResponse(order.getOrderNumber(), order.getProductId(), order.getPrice(), order.getQuantity(), order.getOrderStatus());
         } else {
             stringBuilder = new StringBuilder("Product is not is Stock. Product ID: ").append(orderRequest.productId());
@@ -79,6 +89,19 @@ public class OrderService {
             return new OrderResponse(order.getOrderNumber(), order.getProductId(), order.getPrice(), order.getQuantity(), order.getOrderStatus());
         } catch (Exception e) {
             log.error("markPaymentAsCompleted() Exception: {}", e.getMessage());
+        }
+        return null;
+    }
+
+    public OrderResponse markPaymentAsFailed(String orderNumber) {
+        log.trace("markPaymentAsFailed()");
+        try {
+            Order order = findByOrderNumber(orderNumber);
+            order.setOrderStatus(OrderStatus.PAYMENT_FAILED.name());
+            order = save(order);
+            return new OrderResponse(order.getOrderNumber(), order.getProductId(), order.getPrice(), order.getQuantity(), order.getOrderStatus());
+        } catch (Exception e) {
+            log.error("markPaymentAsFailed() Exception: {}", e.getMessage());
         }
         return null;
     }
