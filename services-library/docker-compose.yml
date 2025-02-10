@@ -37,6 +37,18 @@ services:
     volumes:
       - ./data/paymentService:/data/db
 
+  mongodbApiGatewayService:
+    image: mongo:latest
+    container_name: mongodbApiGatewayService
+    ports:
+      - "27021:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: apigateway-service
+    volumes:
+      - ./data/apiGatewayService:/data/db
+
 
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
