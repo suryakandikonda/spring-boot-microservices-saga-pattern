@@ -1,0 +1,123 @@
+version: '4'
+
+services:
+
+  parent-builder:
+    build:
+      context: .
+    container_name: parent-builder
+    volumes:
+      - parent-artifacts:/artifacts
+    command: sleep infinity
+
+  api-gateway-service:
+    build: ./api-gateway
+    container_name: api-gateway-service
+    ports:
+      - "9000:9000"
+    depends_on:
+      - parent-builder
+      - mongodb
+    volumes:
+      - parent-artifacts:/artifacts
+    networks:
+      - microservices-net
+
+  saga-orchestrator-service:
+    build: ./saga-orchestrator
+    container_name: saga-orchestrator-service
+    ports:
+      - "8084:8084"
+    depends_on:
+      - parent-builder
+      - kafka
+    volumes:
+      - parent-artifacts:/artifacts
+    networks:
+      - microservices-net
+
+  order-service:
+    build: ./order-service
+    container_name: order-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      - parent-builder
+      - mongodb
+    volumes:
+      - parent-artifacts:/artifacts
+    networks:
+      - microservices-net
+
+  inventory-service:
+    build: ./inventory-service
+    container_name: inventory-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      - parent-builder
+      - mongodb
+    volumes:
+      - parent-artifacts:/artifacts
+    networks:
+      - microservices-net
+
+  payment-service:
+    build: ./payment-service
+    container_name: payment-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      - parent-builder
+      - mongodb
+    volumes:
+      - parent-artifacts:/artifacts
+    networks:
+      - microservices-net
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    networks:
+      - microservices-net
+    volumes:
+      - ./data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    ports:
+      - "2181:2181"
+    networks:
+      - microservices-net
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_LISTENERS: PLAINTEXT://:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
+    networks:
+      - microservices-net
+
+volumes:
+  parent-artifacts:
+
+networks:
+  microservices-net:
